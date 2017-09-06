@@ -10,10 +10,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.cogito.erm.compliance.compliancecheck.model.Constants;
 import com.cogito.erm.compliance.compliancecheck.model.Employee;
 import com.cogito.erm.compliance.compliancecheck.model.ExcelCellData;
 import com.cogito.erm.compliance.compliancecheck.model.LocationToMailMapper;
+import com.cogito.erm.compliance.compliancecheck.model.MultiDataHolder;
 import com.cogito.erm.compliance.compliancecheck.repo.EmployeeRepo;
 import com.cogito.erm.compliance.compliancecheck.repo.LocationToMailMapperRepo;
 import org.apache.poi.ss.usermodel.Cell;
@@ -39,37 +42,23 @@ import static com.cogito.erm.compliance.compliancecheck.model.Constants.EMAIL_HE
 @Service
 public class ExcelFileReader implements FileReaderIF {
 
-    @Autowired
-    private EmployeeRepo employeeRepo;
-
-    @Autowired
-    private LocationToMailMapperRepo locationToMailMapperRepo;
-
     private static final int MAIL_ROW_NUM = 0;
     private static final int HEADER_ROW_NUM = 1;
 
     private static final Logger Log = LoggerFactory.getLogger(ExcelFileReader.class);
 
     @Override
-    public void read(String path) throws Exception{
+    public MultiDataHolder read(String path) throws Exception{
 
+        MultiDataHolder multiDataHolder = new MultiDataHolder();
         try {
-            //String pathFile = "/Users/pavankumarjoshi/Documents/workspace/Playground/ERM/compliancecheck/src/main/resources/input1.xlsx";
-            FileInputStream file = new FileInputStream(new File(
-                    path));
-
-
 
             List<ExcelCellData> headerCells = new ArrayList<>();
 
-            List<Employee> employees = new ArrayList<>();
+            List<Employee> employeeList = multiDataHolder.getEmployeeList();
+            List<LocationToMailMapper> locationToMailMapperList = multiDataHolder.getLocationToMailMapperList();
 
             Workbook workbook = WorkbookFactory.create(new File(path));
-            //Create Workbook instance holding reference to .xlsx file
-            //XSSFWorkbook workbook = ne
-            // w XSSFWorkbook(file);
-
-            //Get first/desired sheet from the workbook
 
             int totalSheets = workbook.getNumberOfSheets();
             for (int i = 0; i < totalSheets; i++) {
@@ -108,8 +97,10 @@ public class ExcelFileReader implements FileReaderIF {
 
                                 Cell emailCell = row.getCell(cellNum + 1);
                                 if(emailCell!=null && emailCell.getStringCellValue() != null){
-                                    String emailList = emailCell.getStringCellValue();
-                                    locationToMailMapper.setEmailAddress(emailList);
+                                    if(StringUtils.isNotEmpty(emailCell.getStringCellValue())){
+                                        String emailList = emailCell.getStringCellValue();
+                                        locationToMailMapper.setEmailAddress(emailList);
+                                    }
                                 }
                             }
                             break;
@@ -182,14 +173,16 @@ public class ExcelFileReader implements FileReaderIF {
                     if (excelSheetRowNum != MAIL_ROW_NUM
                             && excelSheetRowNum != HEADER_ROW_NUM) {
                         if (employee.getFirstName() != null && employee.getLastName() != null) {
-                            employeeRepo.save(employee);
+                            //employeeRepo.save(employee);
+                            employeeList.add(employee);
                         }
                     }
 
                     excelSheetRowNum++;
                     dataStructureRowNum++;
                 }
-                locationToMailMapperRepo.save(locationToMailMapper);
+                //locationToMailMapperRepo.save(locationToMailMapper);
+                locationToMailMapperList.add(locationToMailMapper);
             }
 
 
@@ -199,7 +192,7 @@ public class ExcelFileReader implements FileReaderIF {
             Log.debug(ex.getMessage());
             throw ex;
         }
-
+        return multiDataHolder;
     }
 
     private String getCellValue(Cell cell){

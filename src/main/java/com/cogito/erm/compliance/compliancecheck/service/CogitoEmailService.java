@@ -38,7 +38,7 @@ public class CogitoEmailService implements CogitoEmailServiceIF {
     private String mailSignature;
 
     @Value("#{'${mail.ccemail}'.split(',')}")
-    private List<String> ccEmailList;
+    private List<String> bccEmailList;
 
     @Autowired
     private JavaMailSenderImpl javaMailSender;
@@ -49,9 +49,9 @@ public class CogitoEmailService implements CogitoEmailServiceIF {
 
         SimpleMailMessage passwordResetEmail = new SimpleMailMessage();
         passwordResetEmail.setFrom(fromEmail);
-        if(ccEmailList!=null){
-            String[] ccEmailStrings = ccEmailList.toArray(new String[0]);
-            passwordResetEmail.setCc(ccEmailStrings);
+        if(bccEmailList!=null){
+            String[] bccEmailStrings = bccEmailList.toArray(new String[0]);
+            passwordResetEmail.setBcc(bccEmailStrings);
         }
 
         if (emailAddressList!=null){

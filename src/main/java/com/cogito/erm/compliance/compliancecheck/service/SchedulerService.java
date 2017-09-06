@@ -72,6 +72,7 @@ public class SchedulerService {
         for(LocationToMailMapper locationToMailMapper : all){
 
             employeeMessageMap.clear();
+            isMapEmpty = true;
             List<Employee> allByLocation = employeeRepo.findAllByLocation(locationToMailMapper.getLocationName());
             for (Employee employee : allByLocation) {
 

@@ -1,5 +1,6 @@
 package com.cogito.erm.compliance.compliancecheck.controller;
 
+import com.cogito.erm.compliance.compliancecheck.facade.WorkFlowFacadeIF;
 import com.cogito.erm.compliance.compliancecheck.service.FileReaderIF;
 import com.cogito.erm.compliance.compliancecheck.service.SchedulerService;
 import com.google.gson.Gson;
@@ -32,11 +33,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @Controller
 public class FileUplaodController {
 
-    @Autowired
-    private FileReaderIF fileReader;
 
-    @Autowired
-    SchedulerService schedulerService;
 
 
     @Value("${uploaded.folder}")
@@ -48,6 +45,8 @@ public class FileUplaodController {
     @Value("${uploaded.file.extension}")
     private String UPLOADED_FILE_EXTENSION;
 
+    @Autowired
+    private WorkFlowFacadeIF workFlowFacade;
 
     @GetMapping("/")
     public String index() {
@@ -66,9 +65,11 @@ public class FileUplaodController {
             byte[] bytes = file.getBytes();
             Path path = Paths.get(UPLOADED_FOLDER + UPLOADED_FILENAME + "-" + LocalDate.now() + UPLOADED_FILE_EXTENSION);
             Files.write(path, bytes);
-            fileReader.read(path.toString());
+
+            workFlowFacade.executeWorkFlow(path.toString());
+
             redirectAttributes.addFlashAttribute("message", "You successfully uploaded '" + file.getOriginalFilename() + "'");
-            schedulerService.scanForDates();
+
         }
         catch (Exception ex){
             ex.printStackTrace();
