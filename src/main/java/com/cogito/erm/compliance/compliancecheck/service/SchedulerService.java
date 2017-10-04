@@ -4,6 +4,7 @@ import com.cogito.erm.compliance.compliancecheck.model.Employee;
 import com.cogito.erm.compliance.compliancecheck.model.LocationToMailMapper;
 import com.cogito.erm.compliance.compliancecheck.repo.EmployeeRepo;
 import com.cogito.erm.compliance.compliancecheck.repo.LocationToMailMapperRepo;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +13,15 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -64,146 +68,170 @@ public class SchedulerService {
     @Scheduled(cron = "0 0 0 ? * 2/3")
     public void scanForDates() {
 
-
-        boolean isMapEmpty = true;
         log.info("In Send an email for expiry..." );
-        Map<String, List<String>> employeeMessageMap = new TreeMap<>();
+        Map<String, List<String>> employeeMissingDocumentsMap = new TreeMap<>();
+        Map<String, List<String>> employeeLicenseExpiredMessageMap = new TreeMap<>();
+        Map<String, List<String>> employeeLicenseAboutToExpireMessageMap = new TreeMap<>();
+
+        Map<String,Map<String,List<String>>> multiValueMap = new LinkedHashMap<>();
+
         Iterable<LocationToMailMapper> all = locationToMailMapperRepo.findAll();
         for(LocationToMailMapper locationToMailMapper : all){
 
-            employeeMessageMap.clear();
-            isMapEmpty = true;
+            employeeMissingDocumentsMap.clear();
+            employeeLicenseExpiredMessageMap.clear();
+            employeeLicenseAboutToExpireMessageMap.clear();
+
             List<Employee> allByLocation = employeeRepo.findAllByLocation(locationToMailMapper.getLocationName());
+
             for (Employee employee : allByLocation) {
 
-                List<String> employeeDetailsList = new ArrayList<>();
+                List<String> employeeLicenseMissingDetailsList = new ArrayList<>();
+                List<String> employeeLicenseExpiredList = new ArrayList<>();
+                List<String> employeeLicenseAboutToExpireList = new ArrayList<>();
 
-                employeeDetailsList = handleSecurity(employee, employeeDetailsList);
-                employeeDetailsList = handleMsic(employee,employeeDetailsList);
-                employeeDetailsList = handlefirstAid(employee,employeeDetailsList);
-                employeeDetailsList = handlePA(employee,employeeDetailsList);
-                employeeDetailsList = handleSpotless(employee,employeeDetailsList);
+                handleSecurity(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
+                handleMsic(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
+                handlefirstAid(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
+                handlePA(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
+                handleSpotless(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
 
-                if(employeeDetailsList.size() >0){
-                    isMapEmpty = false;
-                    employeeMessageMap.put(employee.getFirstName()+","+employee.getLastName(),employeeDetailsList);
-                }
+                employeeMissingDocumentsMap.put(employee.getFirstName()+","+employee.getLastName(),employeeLicenseMissingDetailsList);
+                employeeLicenseExpiredMessageMap.put(employee.getFirstName()+","+employee.getLastName(),employeeLicenseExpiredList);
+                employeeLicenseAboutToExpireMessageMap.put(employee.getFirstName()+","+employee.getLastName(),employeeLicenseAboutToExpireList);
+
             }
-            if(!isMapEmpty){
-                collabEmailService.sendEmail(employeeMessageMap,locationToMailMapper.getLocationName(),locationToMailMapper.getEmailAddress());
-            }
+            multiValueMap.put("MISSING Documents" , employeeMissingDocumentsMap);
+            multiValueMap.put("ALREADY EXPIRED Documents" , employeeLicenseExpiredMessageMap);
+            multiValueMap.put("ABOUT TO EXPIRE Documents" , employeeLicenseAboutToExpireMessageMap);
+
+            collabEmailService.sendEmail(multiValueMap,
+                    locationToMailMapper.getLocationName(),
+                    locationToMailMapper.getEmailAddress());
+
         }
 
 
     }
 
-    private List<String> handleSecurity(Employee employee,List<String> employeeDetailsList){
+    private void handleSecurity(Employee employee,List<String> employeeMissingDetailsList,List<String> employeeLicenseExpiredList,
+                                        List<String> employeeLicenseAboutToExpireList){
         String securityExpiry = employee.getSecurityExpiryDate();
         if(StringUtils.isEmpty(securityExpiry) || StringUtils.isEmpty(employee.getNswSecurity())){
-            employeeDetailsList.add("No Document for NSW Security License for " + employee.getFirstName() + " " + employee.getLastName() + " " + " From location " + employee.getLocation() + " " );
+            employeeMissingDetailsList.add("No Document for NSW Security License " );
         } else if("NO EXPIRY".equalsIgnoreCase(securityExpiry)) {
             log.info("security expiry for " + employee.getFirstName() + " " + employee.getLastName() + " is empty or NO expiry ");
         }
         else{
-            LocalDate today = LocalDate.now();
-            LocalDate securityExpiryDate = LocalDate.parse(securityExpiry, formatter).minusWeeks(securityExpiryDateThreshold);
-            if (today.compareTo(securityExpiryDate) > 0) {
-                log.info("Send an email for security expiry..." + employee.getFirstName() + " " + employee.getLastName());
-                employeeDetailsList.add(getExpiryMessageForEmployee(employee,SECURITY_LICENSE_EXPIRY));
+
+            // Take current Date
+            // first check if expiry date is less than today
+            // Then already expired
+            // Else
+            // if expiry < today+treshold then aboutToExpire
+            LocalDate securityExpiryDate = LocalDate.parse(securityExpiry, formatter);
+
+            DateTime expiryDateTime = new DateTime(securityExpiryDate.getYear(),securityExpiryDate.getMonthValue(),
+                    securityExpiryDate.getDayOfMonth(),0,0);
+            if(!expiryDateTime.isAfterNow()){
+                employeeLicenseExpiredList.add("Security License already Expired with date " + employee.getSecurityExpiryDate());
+            }
+            else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(securityExpiryDateThreshold))){
+                employeeLicenseAboutToExpireList.add("Security License is about to expire with date " + employee.getSecurityExpiryDate());
             }
         }
-        return employeeDetailsList;
     }
 
-    private List<String> handleMsic(Employee employee,List<String> employeeDetailsList){
+    private void handleMsic(Employee employee,List<String> employeeMissingDetailsList,List<String> employeeLicenseExpiredList,
+    List<String> employeeLicenseAboutToExpireList){
         String msicExpiry = employee.getMsicExpiryDate();
         if(StringUtils.isEmpty(msicExpiry) || StringUtils.isEmpty(employee.getMsicExpiryDate())){
-            employeeDetailsList.add("No Document for MSIC for " + employee.getFirstName() + " " + employee.getLastName() + " " + " From location " + employee.getLocation() + " " );
+            employeeMissingDetailsList.add("No Document for MSIC "  );
         } else if(StringUtils.isEmpty(msicExpiry) || "NO EXPIRY".equalsIgnoreCase(msicExpiry)) {
             log.info("MSIC expiry for " + employee.getFirstName() + " " + employee.getLastName() + " is empty or NO expiry ");
         }
         else{
-            LocalDate today = LocalDate.now();
-            LocalDate msicExpiryDate = LocalDate.parse(msicExpiry, formatter).minusWeeks(msicExpiryDateThreshold);
-            if (today.compareTo(msicExpiryDate) > 0) {
-                log.info("Send an email for MSIC expiry..." + employee.getFirstName() + " " + employee.getLastName());
-                employeeDetailsList.add(getExpiryMessageForEmployee(employee,MSIC_EXPIRY));
+            LocalDate miscExpiryDate = LocalDate.parse(msicExpiry, formatter);
+
+            DateTime expiryDateTime = new DateTime(miscExpiryDate.getYear(),miscExpiryDate.getMonthValue(),
+                    miscExpiryDate.getDayOfMonth(),0,0);
+            if(!expiryDateTime.isAfterNow()){
+                employeeLicenseExpiredList.add("MSIC License already Expired with date " + msicExpiry);
+            }
+            else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(msicExpiryDateThreshold))){
+                employeeLicenseAboutToExpireList.add("MSIC License is about to expire with date " + msicExpiry);
             }
         }
-        return employeeDetailsList;
+
     }
 
-    private List<String> handlefirstAid(Employee employee,List<String> employeeDetailsList){
+    private void handlefirstAid(Employee employee,List<String> employeeMissingDetailsList,List<String> employeeLicenseExpiredList,
+                                        List<String> employeeLicenseAboutToExpireList){
         String firstAidExpiry = employee.getFirstAidExpiry();
         if(StringUtils.isEmpty(firstAidExpiry) || StringUtils.isEmpty(employee.getFirstAidExpiry())){
-            employeeDetailsList.add("No Document for First Aid for " + employee.getFirstName() + " " + employee.getLastName() + " " + " From location " + employee.getLocation() + " "  );
+            employeeMissingDetailsList.add("No Document for First Aid "   );
         } else if(StringUtils.isEmpty(firstAidExpiry) || "NO EXPIRY".equalsIgnoreCase(firstAidExpiry)) {
             log.info("first aid expiry for " + employee.getFirstName() + " " + employee.getLastName() + " is empty or NO expiry ");
         }
         else{
-            LocalDate today = LocalDate.now();
-            LocalDate firstAidExpiryDate = LocalDate.parse(firstAidExpiry, formatter).minusWeeks(firstAidExpiryDateThreshold);
-            if (today.compareTo(firstAidExpiryDate) > 0) {
-                log.info("Send an email for first Aid expiry..." + employee.getFirstName() + " " + employee.getLastName());
-                employeeDetailsList.add(getExpiryMessageForEmployee(employee,FIRSTAID_EXPIRY));
+            LocalDate firstAidExpiryDate = LocalDate.parse(firstAidExpiry, formatter);
+
+            DateTime expiryDateTime = new DateTime(firstAidExpiryDate.getYear(),firstAidExpiryDate.getMonthValue(),
+                    firstAidExpiryDate.getDayOfMonth(),0,0);
+            if(!expiryDateTime.isAfterNow()){
+                employeeLicenseExpiredList.add("FirstAid License already Expired with date " + firstAidExpiry);
+            }
+            else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(firstAidExpiryDateThreshold))){
+                employeeLicenseAboutToExpireList.add("FirstAid License is about to expire with date " + firstAidExpiry);
             }
         }
-        return employeeDetailsList;
     }
 
-    private List<String> handlePA(Employee employee,List<String> employeeDetailsList){
+    private void handlePA(Employee employee,List<String> employeeMissingDetailsList,List<String> employeeLicenseExpiredList,
+                          List<String> employeeLicenseAboutToExpireList){
         String paNswInd = employee.getPaNswInd();
         if(StringUtils.isEmpty(paNswInd)){
-            employeeDetailsList.add("No Document for PA Ind for " + employee.getFirstName() + " " + employee.getLastName() + " " + " From location " + employee.getLocation() + " " );
+            employeeMissingDetailsList.add("No Document for PA Ind ");
         } else if("NO EXPIRY".equalsIgnoreCase(paNswInd)) {
             log.info("port authority induction expiry for " + employee.getFirstName() + " " + employee.getLastName() + " is empty or NO expiry ");
         }
         else{
-            LocalDate today = LocalDate.now();
-            LocalDate paNswIndExpiryDate = LocalDate.parse(paNswInd, formatter).minusWeeks(paExpiryDateThreshold);
-            if (today.compareTo(paNswIndExpiryDate) > 0) {
-                log.info("Send an email for PA induction expiry..." + employee.getFirstName() + " " + employee.getLastName());
-                employeeDetailsList.add(getExpiryMessageForEmployee(employee,PAIND_EXPIRY));
+            LocalDate portAuthorityExpiryDate = LocalDate.parse(paNswInd, formatter);
+
+            DateTime expiryDateTime = new DateTime(portAuthorityExpiryDate.getYear(),portAuthorityExpiryDate.getMonthValue(),
+                    portAuthorityExpiryDate.getDayOfMonth(),0,0);
+            if(!expiryDateTime.isAfterNow()){
+                employeeLicenseExpiredList.add("SPOTLESS License already Expired with date " + paNswInd);
+            }
+            else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(paExpiryDateThreshold))){
+                employeeLicenseAboutToExpireList.add("SPOTLESS License is about to expire with date " + paNswInd);
             }
         }
-        return employeeDetailsList;
     }
 
-    private List<String> handleSpotless(Employee employee,List<String> employeeDetailsList){
+    private void handleSpotless(Employee employee,List<String> employeeMissingDetailsList,List<String> employeeLicenseExpiredList,
+                                        List<String> employeeLicenseAboutToExpireList){
         String spotlessInd = employee.getSpotlessInd();
         if(StringUtils.isEmpty(spotlessInd)){
-            employeeDetailsList.add("No Document for Spotless Induction for " + employee.getFirstName() + " " + employee.getLastName() + " " + " From location " + employee.getLocation() + " ");
+            employeeMissingDetailsList.add("No Document for Spotless Induction ");
         } else if("NO EXPIRY".equalsIgnoreCase(spotlessInd)
                 || "NOEXPIRY".equalsIgnoreCase(spotlessInd)) {
             log.info("spotless induction expiry for " + employee.getFirstName() + " " + employee.getLastName() + " is NO expiry ");
         }
         else{
-            LocalDate today = LocalDate.now();
-            LocalDate spotlessIndExpiryDate = LocalDate.parse(spotlessInd, formatter).minusWeeks(spotlessExpiryDateThreshold);
-            if (today.compareTo(spotlessIndExpiryDate) > 0) {
-                log.info("Send an email for spotless expiry..." + employee.getFirstName() + " " + employee.getLastName());
-                employeeDetailsList.add(getExpiryMessageForEmployee(employee,SPOTLESS_EXPIRY));
+            LocalDate spotlessExpiryDate = LocalDate.parse(spotlessInd, formatter);
+
+            DateTime expiryDateTime = new DateTime(spotlessExpiryDate.getYear(),spotlessExpiryDate.getMonthValue(),
+                    spotlessExpiryDate.getDayOfMonth(),0,0);
+            if(!expiryDateTime.isAfterNow()){
+                employeeLicenseExpiredList.add("SPOTLESS License already Expired with date " + spotlessInd);
+            }
+            else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(spotlessExpiryDateThreshold))){
+                employeeLicenseAboutToExpireList.add("SPOTLESS License is about to expire with date " + spotlessInd);
             }
         }
-        return employeeDetailsList;
+
     }
-    private String getExpiryMessageForEmployee(Employee employee, String expiryCategory){
-        if(SECURITY_LICENSE_EXPIRY.equalsIgnoreCase(expiryCategory)) {
-            return "Security License About To Expire Or Expired From location " + employee.getLocation() + " " + employee.getSecurityExpiryDate() ;
-        }
-        if(MSIC_EXPIRY.equalsIgnoreCase(expiryCategory)) {
-            return "MSIC License About To Expire Or Expired For From location " + employee.getLocation() + " " + employee.getMsicExpiryDate() ;
-        }
-        if(FIRSTAID_EXPIRY.equalsIgnoreCase(expiryCategory)) {
-            return "First Aid About To Expire Or Expired From location " + employee.getLocation() + " " +  employee.getFirstAidExpiry() ;
-        }
-        if(PAIND_EXPIRY.equalsIgnoreCase(expiryCategory)) {
-            return "Port Authority Induction About To Expire Or Expired From location " + employee.getLocation() + " " +  employee.getPaNswInd() ;
-        }
-        if(SPOTLESS_EXPIRY.equalsIgnoreCase(expiryCategory)) {
-            return "Spotless About To Expire Or Expired From location " + employee.getLocation() + " " +  employee.getSpotlessInd() ;
-        }
-        return null;
-    }
+
 
 }
