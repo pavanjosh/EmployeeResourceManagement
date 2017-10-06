@@ -156,10 +156,10 @@ public class SchedulerService {
             DateTime expiryDateTime = new DateTime(miscExpiryDate.getYear(),miscExpiryDate.getMonthValue(),
                     miscExpiryDate.getDayOfMonth(),0,0);
             if(!expiryDateTime.isAfterNow()){
-                employeeLicenseExpiredList.add("MSIC License already Expired with date " + msicExpiry);
+                employeeLicenseExpiredList.add("MSIC already Expired with date " + msicExpiry);
             }
             else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(msicExpiryDateThreshold))){
-                employeeLicenseAboutToExpireList.add("MSIC License is about to expire with date " + msicExpiry);
+                employeeLicenseAboutToExpireList.add("MSIC is about to expire with date " + msicExpiry);
             }
         }
 
@@ -179,10 +179,10 @@ public class SchedulerService {
             DateTime expiryDateTime = new DateTime(firstAidExpiryDate.getYear(),firstAidExpiryDate.getMonthValue(),
                     firstAidExpiryDate.getDayOfMonth(),0,0);
             if(!expiryDateTime.isAfterNow()){
-                employeeLicenseExpiredList.add("FirstAid License already Expired with date " + firstAidExpiry);
+                employeeLicenseExpiredList.add("First Aid already Expired with date " + firstAidExpiry);
             }
             else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(firstAidExpiryDateThreshold))){
-                employeeLicenseAboutToExpireList.add("FirstAid License is about to expire with date " + firstAidExpiry);
+                employeeLicenseAboutToExpireList.add("First Aid is about to expire with date " + firstAidExpiry);
             }
         }
     }
@@ -201,10 +201,10 @@ public class SchedulerService {
             DateTime expiryDateTime = new DateTime(portAuthorityExpiryDate.getYear(),portAuthorityExpiryDate.getMonthValue(),
                     portAuthorityExpiryDate.getDayOfMonth(),0,0);
             if(!expiryDateTime.isAfterNow()){
-                employeeLicenseExpiredList.add("SPOTLESS License already Expired with date " + paNswInd);
+                employeeLicenseExpiredList.add("Port Authority already Expired with date " + paNswInd);
             }
             else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(paExpiryDateThreshold))){
-                employeeLicenseAboutToExpireList.add("SPOTLESS License is about to expire with date " + paNswInd);
+                employeeLicenseAboutToExpireList.add("Port Authority is about to expire with date " + paNswInd);
             }
         }
     }
@@ -224,10 +224,10 @@ public class SchedulerService {
             DateTime expiryDateTime = new DateTime(spotlessExpiryDate.getYear(),spotlessExpiryDate.getMonthValue(),
                     spotlessExpiryDate.getDayOfMonth(),0,0);
             if(!expiryDateTime.isAfterNow()){
-                employeeLicenseExpiredList.add("SPOTLESS License already Expired with date " + spotlessInd);
+                employeeLicenseExpiredList.add("SPOTLESS already Expired with date " + spotlessInd);
             }
             else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(spotlessExpiryDateThreshold))){
-                employeeLicenseAboutToExpireList.add("SPOTLESS License is about to expire with date " + spotlessInd);
+                employeeLicenseAboutToExpireList.add("SPOTLESS is about to expire with date " + spotlessInd);
             }
         }
 
