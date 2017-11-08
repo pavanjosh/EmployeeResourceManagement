@@ -29,13 +29,6 @@ import java.util.TreeMap;
 @Service
 public class SchedulerService {
 
-    private final String SECURITY_LICENSE_EXPIRY = "SecurityExpiry";
-    private final String MSIC_EXPIRY = "MsicExpiry";
-    private final String FIRSTAID_EXPIRY = "firstAidExpiry";
-    private final String PAIND_EXPIRY = "paExpiry";
-    private final String SPOTLESS_EXPIRY = "SpotlessExpiry";
-
-
     @Autowired
     private CogitoEmailServiceIF collabEmailService;
 
@@ -95,6 +88,7 @@ public class SchedulerService {
                 handlefirstAid(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
                 handlePA(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
                 handleSpotless(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
+                handleWelcomSiteInduction(employee, employeeLicenseMissingDetailsList);
 
                 employeeMissingDocumentsMap.put(employee.getFirstName()+","+employee.getLastName(),employeeLicenseMissingDetailsList);
                 employeeLicenseExpiredMessageMap.put(employee.getFirstName()+","+employee.getLastName(),employeeLicenseExpiredList);
@@ -111,7 +105,13 @@ public class SchedulerService {
 
         }
 
+    }
+    private void handleWelcomSiteInduction(Employee employee,List<String> employeeMissingDetailsList) {
 
+        String welcomeSiteInduction = employee.getWelcomeSiteInduction();
+        if (StringUtils.isEmpty(welcomeSiteInduction)) {
+            employeeMissingDetailsList.add("No Document for Welcome Site Induction");
+        }
     }
 
     private void handleSecurity(Employee employee,List<String> employeeMissingDetailsList,List<String> employeeLicenseExpiredList,

@@ -30,6 +30,7 @@ public class Employee implements Serializable{
   private String phoneNumber;
   private String emailId;
   private String pfso;
+  private String welcomeSiteInduction;
   private String location;
 
   public String getLocation() {
@@ -48,6 +49,14 @@ public class Employee implements Serializable{
 //  public void setDesc(String desc) {
 //    this.desc = desc;
 //  }
+
+  public String getWelcomeSiteInduction() {
+    return welcomeSiteInduction;
+  }
+
+  public void setWelcomeSiteInduction(String welcomeSiteInduction) {
+    this.welcomeSiteInduction = welcomeSiteInduction;
+  }
 
   public String getPfso() {
     return pfso;

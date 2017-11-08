@@ -32,6 +32,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import static com.cogito.erm.compliance.compliancecheck.model.Constants.EMAIL_HEADER;
@@ -46,6 +47,9 @@ public class ExcelFileReader implements FileReaderIF {
     private static final int HEADER_ROW_NUM = 1;
 
     private static final Logger Log = LoggerFactory.getLogger(ExcelFileReader.class);
+
+    @Value("${totalColumns}")
+    private int totalColumns;
 
     @Override
     public MultiDataHolder read(String path) throws Exception{
@@ -82,8 +86,8 @@ public class ExcelFileReader implements FileReaderIF {
                     //For each row, iterate through all the columns
                     Iterator<Cell> cellIterator = row.cellIterator();
 
-
-                    while (cellIterator.hasNext()) {
+                    while(cellIterator.hasNext()){
+                    //for (int index =0;index<totalColumns;index++) {
                         Cell cell0 = cellIterator.next();
                         Cell cell = row.getCell(cellNum, Row.RETURN_NULL_AND_BLANK);
 
@@ -159,7 +163,10 @@ public class ExcelFileReader implements FileReaderIF {
                             } else if (cellNum == getColNum(Constants.PFSO, headerCells)) {
                                 //System.out.println("PFSO " + cell.getStringCellValue());
                                 employee.setPfso(getCellValue(cell));
-                            } else if (cellNum == getColNum(Constants.DESC, headerCells)) {
+                            }else if (cellNum == getColNum(Constants.WELCOME_SITE_INDUCTION, headerCells)) {
+                                //System.out.println("PHONENUMBER " + cell.getStringCellValue());
+                                employee.setWelcomeSiteInduction(getCellDateValue(cell));
+                            }else if (cellNum == getColNum(Constants.DESC, headerCells)) {
                                 //System.out.println("DESC " + cell.getStringCellValue());
                                 //employee.setDesc(cell.getStringCellValue());
                             } else if (cellNum == getColNum(Constants.PHONENUMBER, headerCells)) {
