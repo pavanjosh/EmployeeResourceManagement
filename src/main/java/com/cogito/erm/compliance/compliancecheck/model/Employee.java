@@ -14,9 +14,9 @@ import javax.validation.constraints.NotNull;
 public class Employee implements Serializable{
 
   @Id
-  private String firstName;
-  @Id
-  private String lastName;
+  private String name;
+//  @Id
+//  private String lastName;
 
   private String nswSecurity;
   private String securityExpiryDate;
@@ -25,6 +25,7 @@ public class Employee implements Serializable{
   private String msicExpiryDate;
   private String firstAidExpiry;
   private String rsa;
+  private String rsa_expiry;
   private String paNswInd;
   private String spotlessInd;
   private String phoneNumber;
@@ -50,6 +51,14 @@ public class Employee implements Serializable{
 //    this.desc = desc;
 //  }
 
+  public String getRsa_expiry() {
+    return rsa_expiry;
+  }
+
+  public void setRsa_expiry(String rsa_expiry) {
+    this.rsa_expiry = rsa_expiry;
+  }
+
   public String getWelcomeSiteInduction() {
     return welcomeSiteInduction;
   }
@@ -66,20 +75,12 @@ public class Employee implements Serializable{
     this.pfso = pfso;
   }
 
-  public String getFirstName() {
-    return firstName;
+  public String getName() {
+    return name;
   }
 
-  public void setFirstName(String firstName) {
-    this.firstName = firstName;
-  }
-
-  public String getLastName() {
-    return lastName;
-  }
-
-  public void setLastName(String lastName) {
-    this.lastName = lastName;
+  public void setName(String name) {
+    this.name = name;
   }
 
   public String getNswSecurity() {
@@ -172,8 +173,7 @@ public class Employee implements Serializable{
 
   @Override public String toString() {
     return "Employee{" +
-        "firstName='" + firstName + '\'' +
-        ", lastName='" + lastName + '\'' +
+        "name='" + name + '\'' +
         ", nswSecurity='" + nswSecurity + '\'' +
         ", securityExpiryDate='" + securityExpiryDate + '\'' +
         ", employeeClass='" + securityClass + '\'' +

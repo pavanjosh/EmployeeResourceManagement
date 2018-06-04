@@ -43,11 +43,11 @@ public class DBService implements DBServiceIF{
         List<LocationToMailMapper> locationToMailMapperList = multiDataHolder.getLocationToMailMapperList();
 
         for (Employee employee :employeeList){
-            stringSet.add(employee.getFirstName()+employee.getLastName());
+            stringSet.add(employee.getName());
         }
 
         for (Employee employee:dbEmployees){
-            if(! stringSet.contains(employee.getFirstName()+employee.getLastName())){
+            if(! stringSet.contains(employee.getName())){
                 employeeRepo.delete(employee);
             }
         }

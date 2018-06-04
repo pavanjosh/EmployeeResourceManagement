@@ -46,6 +46,9 @@ public class SchedulerService {
     @Value("${task.config.portauthority.license.threshold}")
     private int paExpiryDateThreshold;
 
+    @Value("${task.config.rsa.license.threshold}")
+    private int rsaExpiryDateThreshold;
+
     @Value("${task.config.spotless.license.threshold}")
     private int spotlessExpiryDateThreshold;
 
@@ -87,12 +90,13 @@ public class SchedulerService {
                 handleMsic(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
                 handlefirstAid(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
                 handlePA(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
+                handleRSAExpiry(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
                 handleSpotless(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
-                handleWelcomSiteInduction(employee, employeeLicenseMissingDetailsList);
+                //handleWelcomSiteInduction(employee, employeeLicenseMissingDetailsList);
 
-                employeeMissingDocumentsMap.put(employee.getFirstName()+","+employee.getLastName(),employeeLicenseMissingDetailsList);
-                employeeLicenseExpiredMessageMap.put(employee.getFirstName()+","+employee.getLastName(),employeeLicenseExpiredList);
-                employeeLicenseAboutToExpireMessageMap.put(employee.getFirstName()+","+employee.getLastName(),employeeLicenseAboutToExpireList);
+                employeeMissingDocumentsMap.put(employee.getName(),employeeLicenseMissingDetailsList);
+                employeeLicenseExpiredMessageMap.put(employee.getName(),employeeLicenseExpiredList);
+                employeeLicenseAboutToExpireMessageMap.put(employee.getName(),employeeLicenseAboutToExpireList);
 
             }
             multiValueMap.put("MISSING Documents" , employeeMissingDocumentsMap);
@@ -120,7 +124,7 @@ public class SchedulerService {
         if(StringUtils.isEmpty(securityExpiry) || StringUtils.isEmpty(employee.getNswSecurity())){
             employeeMissingDetailsList.add("No Document for NSW Security License " );
         } else if("NO EXPIRY".equalsIgnoreCase(securityExpiry)) {
-            log.info("security expiry for " + employee.getFirstName() + " " + employee.getLastName() + " is empty or NO expiry ");
+            log.info("security expiry for " + employee.getName() + " is empty or NO expiry ");
         }
         else{
 
@@ -148,7 +152,7 @@ public class SchedulerService {
         if(StringUtils.isEmpty(msicExpiry) || StringUtils.isEmpty(employee.getMsicExpiryDate())){
             employeeMissingDetailsList.add("No Document for MSIC "  );
         } else if(StringUtils.isEmpty(msicExpiry) || "NO EXPIRY".equalsIgnoreCase(msicExpiry)) {
-            log.info("MSIC expiry for " + employee.getFirstName() + " " + employee.getLastName() + " is empty or NO expiry ");
+            log.info("MSIC expiry for " + employee.getName()  + " is empty or NO expiry ");
         }
         else{
             LocalDate miscExpiryDate = LocalDate.parse(msicExpiry, formatter);
@@ -171,7 +175,7 @@ public class SchedulerService {
         if(StringUtils.isEmpty(firstAidExpiry) || StringUtils.isEmpty(employee.getFirstAidExpiry())){
             employeeMissingDetailsList.add("No Document for First Aid "   );
         } else if(StringUtils.isEmpty(firstAidExpiry) || "NO EXPIRY".equalsIgnoreCase(firstAidExpiry)) {
-            log.info("first aid expiry for " + employee.getFirstName() + " " + employee.getLastName() + " is empty or NO expiry ");
+            log.info("first aid expiry for " + employee.getName() + " is empty or NO expiry ");
         }
         else{
             LocalDate firstAidExpiryDate = LocalDate.parse(firstAidExpiry, formatter);
@@ -193,7 +197,7 @@ public class SchedulerService {
         if(StringUtils.isEmpty(paNswInd)){
             employeeMissingDetailsList.add("No Document for PA Ind ");
         } else if("NO EXPIRY".equalsIgnoreCase(paNswInd)) {
-            log.info("port authority induction expiry for " + employee.getFirstName() + " " + employee.getLastName() + " is empty or NO expiry ");
+            log.info("port authority induction expiry for " + employee.getName()  + " is empty or NO expiry ");
         }
         else{
             LocalDate portAuthorityExpiryDate = LocalDate.parse(paNswInd, formatter);
@@ -209,6 +213,26 @@ public class SchedulerService {
         }
     }
 
+
+    private void handleRSAExpiry(Employee employee,List<String> employeeMissingDetailsList,List<String> employeeLicenseExpiredList,
+                          List<String> employeeLicenseAboutToExpireList){
+        String rsaExpiry = employee.getRsa_expiry();
+
+        if(!StringUtils.isEmpty(rsaExpiry)){
+            LocalDate portAuthorityExpiryDate = LocalDate.parse(rsaExpiry, formatter);
+
+            DateTime expiryDateTime = new DateTime(portAuthorityExpiryDate.getYear(),portAuthorityExpiryDate.getMonthValue(),
+                    portAuthorityExpiryDate.getDayOfMonth(),0,0);
+            if(!expiryDateTime.isAfterNow()){
+                employeeLicenseExpiredList.add("RSA already Expired with date " + rsaExpiry);
+            }
+            else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(rsaExpiryDateThreshold))){
+                employeeLicenseAboutToExpireList.add("RSA is about to expire with date " + rsaExpiry);
+            }
+        }
+    }
+
+
     private void handleSpotless(Employee employee,List<String> employeeMissingDetailsList,List<String> employeeLicenseExpiredList,
                                         List<String> employeeLicenseAboutToExpireList){
         String spotlessInd = employee.getSpotlessInd();
@@ -216,7 +240,7 @@ public class SchedulerService {
             employeeMissingDetailsList.add("No Document for Spotless Induction ");
         } else if("NO EXPIRY".equalsIgnoreCase(spotlessInd)
                 || "NOEXPIRY".equalsIgnoreCase(spotlessInd)) {
-            log.info("spotless induction expiry for " + employee.getFirstName() + " " + employee.getLastName() + " is NO expiry ");
+            log.info("spotless induction expiry for " + employee.getName()  + " is NO expiry ");
         }
         else{
             LocalDate spotlessExpiryDate = LocalDate.parse(spotlessInd, formatter);

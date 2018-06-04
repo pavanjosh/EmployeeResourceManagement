@@ -142,12 +142,9 @@ public class ExcelFileReader implements FileReaderIF {
 
                                 employee.setNswSecurity(getCellValue(cell));
 
-                            } else if (cellNum == getColNum(Constants.FIRSTNAME, headerCells)) {
+                            } else if (cellNum == getColNum(Constants.NAME, headerCells)) {
                                 //System.out.println("FIRSTNAME " + cell.getStringCellValue());
-                                employee.setFirstName(getCellValue(cell));
-                            } else if (cellNum == getColNum(Constants.SURNAME, headerCells)) {
-                                //System.out.println("LASTNAME " + cell.getStringCellValue());
-                                employee.setLastName(getCellValue(cell));
+                                employee.setName(getCellValue(cell));
                             } else if (cellNum == getColNum(Constants.MSICNO, headerCells)) {
                                 //System.out.println("MSICNO " + cell.getStringCellValue());
                                 employee.setMsicNo(getCellValue(cell));
@@ -157,15 +154,19 @@ public class ExcelFileReader implements FileReaderIF {
                             } else if (cellNum == getColNum(Constants.RSA, headerCells)) {
                                 //System.out.println("RSA " + cell.getStringCellValue());
                                 employee.setRsa(getCellValue(cell));
-                            } else if (cellNum == getColNum(Constants.EMAILID, headerCells)) {
+                            }else if (cellNum == getColNum(Constants.RSA_EXPIRY, headerCells)) {
+                                //System.out.println("RSA " + cell.getStringCellValue());
+                                employee.setRsa_expiry(getCellValue(cell));
+                            }else if (cellNum == getColNum(Constants.EMAILID, headerCells)) {
                                 //System.out.println("email id " + cell.getStringCellValue());
                                 employee.setEmailId(getCellValue(cell));
                             } else if (cellNum == getColNum(Constants.PFSO, headerCells)) {
                                 //System.out.println("PFSO " + cell.getStringCellValue());
                                 employee.setPfso(getCellValue(cell));
-                            }else if (cellNum == getColNum(Constants.WELCOME_SITE_INDUCTION, headerCells)) {
-                                //System.out.println("PHONENUMBER " + cell.getStringCellValue());
-                                employee.setWelcomeSiteInduction(getCellDateValue(cell));
+//                            }
+//                          else if (cellNum == getColNum(Constants.WELCOME_SITE_INDUCTION, headerCells)) {
+//                                //System.out.println("PHONENUMBER " + cell.getStringCellValue());
+//                                employee.setWelcomeSiteInduction(getCellDateValue(cell));
                             }else if (cellNum == getColNum(Constants.DESC, headerCells)) {
                                 //System.out.println("DESC " + cell.getStringCellValue());
                                 //employee.setDesc(cell.getStringCellValue());
@@ -176,10 +177,10 @@ public class ExcelFileReader implements FileReaderIF {
                         }
                         cellNum++;
                     }
-                    System.out.println("Saving Employee " + employee.getFirstName() + " " + employee.getLastName());
+                    System.out.println("Saving Employee " + employee.getName() );
                     if (excelSheetRowNum != MAIL_ROW_NUM
                             && excelSheetRowNum != HEADER_ROW_NUM) {
-                        if (employee.getFirstName() != null && employee.getLastName() != null) {
+                        if (employee.getName() != null ) {
                             //employeeRepo.save(employee);
                             employeeList.add(employee);
                         }
