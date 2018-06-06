@@ -156,7 +156,7 @@ public class ExcelFileReader implements FileReaderIF {
                                 employee.setRsa(getCellValue(cell));
                             }else if (cellNum == getColNum(Constants.RSA_EXPIRY, headerCells)) {
                                 //System.out.println("RSA " + cell.getStringCellValue());
-                                employee.setRsa_expiry(getCellValue(cell));
+                                employee.setRsa_expiry(getCellDateValue(cell));
                             }else if (cellNum == getColNum(Constants.EMAILID, headerCells)) {
                                 //System.out.println("email id " + cell.getStringCellValue());
                                 employee.setEmailId(getCellValue(cell));
