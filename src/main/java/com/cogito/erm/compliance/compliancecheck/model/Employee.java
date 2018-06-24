@@ -28,11 +28,29 @@ public class Employee implements Serializable{
   private String rsa_expiry;
   private String paNswInd;
   private String spotlessInd;
+  private String trafficControl;
+  private String tcExpiry;
   private String phoneNumber;
   private String emailId;
   private String pfso;
   private String welcomeSiteInduction;
   private String location;
+
+  public String getTrafficControl() {
+    return trafficControl;
+  }
+
+  public void setTrafficControl(String trafficControl) {
+    this.trafficControl = trafficControl;
+  }
+
+  public String getTcExpiry() {
+    return tcExpiry;
+  }
+
+  public void setTcExpiry(String tcExpiry) {
+    this.tcExpiry = tcExpiry;
+  }
 
   public String getLocation() {
     return location;

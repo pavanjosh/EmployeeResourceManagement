@@ -49,6 +49,9 @@ public class SchedulerService {
     @Value("${task.config.rsa.license.threshold}")
     private int rsaExpiryDateThreshold;
 
+    @Value("${task.config.trafficcontrol.license.threshold}")
+    private int trafficControlExpiryDateThreshold;
+
     @Value("${task.config.spotless.license.threshold}")
     private int spotlessExpiryDateThreshold;
 
@@ -92,6 +95,7 @@ public class SchedulerService {
                 handlePA(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
                 handleRSAExpiry(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
                 handleSpotless(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
+                handleTCExpiry(employee, employeeLicenseMissingDetailsList,employeeLicenseExpiredList,employeeLicenseAboutToExpireList);
                 //handleWelcomSiteInduction(employee, employeeLicenseMissingDetailsList);
 
                 employeeMissingDocumentsMap.put(employee.getName(),employeeLicenseMissingDetailsList);
@@ -228,6 +232,24 @@ public class SchedulerService {
             }
             else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(rsaExpiryDateThreshold))){
                 employeeLicenseAboutToExpireList.add("RSA is about to expire with date " + rsaExpiry);
+            }
+        }
+    }
+
+    private void handleTCExpiry(Employee employee,List<String> employeeMissingDetailsList,List<String> employeeLicenseExpiredList,
+                                 List<String> employeeLicenseAboutToExpireList){
+        String tcExpiry = employee.getTcExpiry();
+
+        if(!StringUtils.isEmpty(tcExpiry)){
+            LocalDate portAuthorityExpiryDate = LocalDate.parse(tcExpiry, formatter);
+
+            DateTime expiryDateTime = new DateTime(portAuthorityExpiryDate.getYear(),portAuthorityExpiryDate.getMonthValue(),
+                    portAuthorityExpiryDate.getDayOfMonth(),0,0);
+            if(!expiryDateTime.isAfterNow()){
+                employeeLicenseExpiredList.add("Traffic Control already Expired with date " + tcExpiry);
+            }
+            else if(!expiryDateTime.isAfter(new DateTime().plusWeeks(trafficControlExpiryDateThreshold))){
+                employeeLicenseAboutToExpireList.add("Traffic Control is about to expire with date " + tcExpiry);
             }
         }
     }

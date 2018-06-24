@@ -138,6 +138,14 @@ public class ExcelFileReader implements FileReaderIF {
 
                                 employee.setSpotlessInd(getCellDateValue(cell));
 
+                            }else if (cellNum == getColNum(Constants.TRAFFIC_CONTROL, headerCells)) {
+
+                                employee.setTrafficControl(getCellValue(cell));
+
+                            }else if (cellNum == getColNum(Constants.T_C_EXIPRY, headerCells)) {
+
+                                employee.setTcExpiry(getCellDateValue(cell));
+
                             } else if (cellNum == getColNum(Constants.NSW_SECURITY, headerCells)) {
 
                                 employee.setNswSecurity(getCellValue(cell));

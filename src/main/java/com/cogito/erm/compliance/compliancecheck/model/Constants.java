@@ -14,6 +14,8 @@ public class Constants {
 	public static final String RSA_EXPIRY = "RSA _EXPIRY";
 	public static final String PA_NSW_IND = "PA_NSW_IND";
 	public static final String SPOTLESS_IND = "SPOTLESS_IND";
+	public static final String TRAFFIC_CONTROL = "Traffic_Control";
+	public static final String T_C_EXIPRY="T_C Expiry";
 	public static final String PHONENUMBER = "PHONENUMBER";
 	public static final String EMAILID = "EMAILID";
 	public static final String PFSO = "PFSO";
